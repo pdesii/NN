@@ -5,13 +5,17 @@
 #include <math.h>
 #include "mex.h"
 
+#define OUTPUT_M  1.0
+#define OUTPUT_Q 0.0
+#define OUTPUT_GAIN 1.0
+
 static double sigmoid(double x)
-{ 
+{
     return 1 / (1 + exp(-x));
 }
 
 static double dSigmoid(double x)
-{ 
+{
     return x * (1 - x);
 }
 
@@ -38,7 +42,7 @@ static void nnComputeOutput(int numInputs,int numHiddenNodes, int numOutputs, do
         {
             activation += hiddenLayer[k]*outputWeights[k + j*numHiddenNodes];
         }
-        outputLayer[j] = sigmoid(activation);
+        outputLayer[j] = OUTPUT_GAIN * OUTPUT_M * (sigmoid(activation) + OUTPUT_Q); 
     }
 }
 
@@ -62,6 +66,9 @@ static void nnTrain(int numEpochs, double learningRate,
             for (int j=0; j<numOutputs; j++) 
             {
                 double dError = (training_outputs[i*numOutputs + j]-outputLayer[j]);
+                
+                dError = ((dError/OUTPUT_M) - OUTPUT_Q)/OUTPUT_GAIN;
+                
                 deltaOutput[j] = dError*dSigmoid(outputLayer[j]);
                 
                 totError += fabs(dError);
